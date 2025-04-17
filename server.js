@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { executablePath } = require('puppeteer');
 const qrcode = require('qrcode-terminal');
 const multer = require('multer');
 const path = require('path');
@@ -10,9 +11,16 @@ const mime = require('mime-types');
 // Initialize Express app
 const app = express();
 
+// Setup CORS to accept any origin
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Setup multer for file storage with better error handling
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) { 
+    destination: function (req, file, cb) {
         const uploadDir = 'uploads';
         try {
             if (!fs.existsSync(uploadDir)) {
@@ -95,7 +103,6 @@ const upload = multer({
 });
 
 // Middleware
-app.use(cors());
 app.use(express.json({ limit: '16mb' }));
 app.use(express.urlencoded({ extended: true, limit: '16mb' }));
 app.use('/uploads', express.static('uploads'));
@@ -145,6 +152,7 @@ function initializeWhatsApp() {
         authStrategy: new LocalAuth(),
         puppeteer: {
             headless: true,
+            executablePath: executablePath(),
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -309,7 +317,7 @@ app.post('/send-single-media', async (req, res) => {
         res.json({ results });
 
     } catch (error) {
-        res.status(500).json({ error: 'خ طأ في معالجة الطلب: ' + error.message });
+        res.status(500).json({ error: 'خطأ في معالجة الطلب: ' + error.message });
     }
 });
 
